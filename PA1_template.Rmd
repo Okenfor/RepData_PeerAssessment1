@@ -5,14 +5,43 @@ output:
     keep_md: true
 ---
 
+This assignment aims for the analysis of activity monitoring of steps taken in 5-minute interval. Next, the process of analysis is described and R code is presented.
 
 ## Loading and preprocessing the data
 
+The data is loaded using read.csv function. Afterthat, the date is converted from character format into date format.
+
+```{r echo=TRUE}
+activity <- read.csv("activity.csv", stringsAsFactors=F)
+activity$date2 <- strptime (activity$date, "%Y-%m-%d")
+```
 
 
 ## What is mean total number of steps taken per day?
 
+An histogram of the total number of steps taken each day is created.
 
+```{r echo=TRUE}
+attach(activity)
+aggdata <-aggregate(activity$steps, by=list(date), FUN=sum, na.rm=TRUE)
+print(aggdata)
+detach(activity)
+
+library(ggplot2)
+plot <- ggplot(aggdata, aes(x=x))
+plot <- plot +  geom_histogram(aes(y=..density..), binwidth = 500, colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666")  # Overlay with transparent density plot
+print(plot)
+```
+
+The mean and the median of the total number of steps are calculated. Then, mean (red line) and the median (blue line) are plotted in the histogram created abode.
+
+```{r echo=TRUE}
+mean <- mean(aggdata$x)
+median <- median(aggdata$x)
+plot <- plot + geom_vline(aes(xintercept=mean), color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median), color="blue", linetype="dashed", size=1)
+print(plot)
+```
 
 ## What is the average daily activity pattern?
 
