@@ -144,12 +144,23 @@ For this purpose we use the variable date2 transformed before into POSIXlt (date
 
 ```{r echo=TRUE}
 activityWithoutNAs$weekdays <- (weekdays(activityWithoutNAs$date2, abbreviate = T))
-for(i in 1:length(activityWithoutNAs)){ 
-    if (activityWithoutNAs[i,"weekdays"] == "Sat" | activityWithoutNAs[i,"weekdays"] == "Sun") 
-        { activityWithoutNAs[i, "weekdaysType"] <- "Weekend" } 
-    else {activityWithoutNAs[i, "weekdaysType"] <- "Weekday"}
-}
 
-unique(activityWithoutNAs$weekdaysType)
-activityWithoutNAs[,"weekdays"] == "Sat"
+weekendsInd <- which(activityWithoutNAs[,"weekdays"] %in% c("sáb","dom"), arr.ind=TRUE)
+weekdaysInd <- which(!(activityWithoutNAs[,"weekdays"] %in% c("sáb","dom")), arr.ind=TRUE)
+activityWithoutNAs[weekendsInd, "weekdayType"] <- "weekend"
+activityWithoutNAs[weekdaysInd, "weekdayType"] <- "weekday"
+
+attach(activityWithoutNAs)
+aggdata4 <-aggregate(steps, by=list(interval,weekdayType), FUN=mean, na.rm=TRUE)
+detach(activityWithoutNAs)
+
+library(ggplot2)
+aggdata4$Avg_Steps <- aggdata4$x
+aggdata4$Interval <- aggdata4$Group.1
+aggdata4$WeekdayType <- aggdata4$Group.2
+plot4 <- ggplot(aggdata4, aes(Interval, Avg_Steps))
+plot4 <- plot4 +  geom_line() + ylab("Number of steps taken (daily average)")
+plot4 <- plot4 + facet_grid(WeekdayType~.)
+print(plot4)
+
 ```

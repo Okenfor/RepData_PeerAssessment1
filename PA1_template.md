@@ -94,6 +94,13 @@ print(aggdata)
 detach(activity)
 
 library(ggplot2)
+```
+
+```
+## Warning: package 'ggplot2' was built under R version 3.1.2
+```
+
+```r
 aggdata$Total_Steps <- aggdata$x
 plot <- ggplot(aggdata, aes(x=Total_Steps))
 plot <- plot +  geom_histogram(aes(y=..density..), binwidth = 500, colour="black", fill="white") +
@@ -101,7 +108,7 @@ plot <- plot +  geom_histogram(aes(y=..density..), binwidth = 500, colour="black
 print(plot)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
 
 The mean and the median of the total number of steps are calculated. Then, mean (<span style="color:red">red line</span>) and the median (<span style="color:blue">blue line</span>) are plotted in the histogram created abode.
 
@@ -130,7 +137,7 @@ plot <- plot + geom_vline(aes(xintercept=mean), color="red", linetype="dashed", 
 print(plot)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 ## What is the average daily activity pattern?
 
@@ -151,7 +158,7 @@ plot2 <- plot2 +  geom_line() + ylab("Daily average")
 print(plot2)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
 The maximum number of steps on average across all days is:
 
@@ -184,7 +191,7 @@ plot2 <- plot2 + geom_vline(aes(xintercept=Interval_WithMax), color="blue", line
 print(plot2)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
 
 ## Imputing missing values
 
@@ -229,7 +236,7 @@ plot3 <- plot3 +  geom_histogram(aes(y=..density..), binwidth = 500, colour="bla
 print(plot3)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
 
 ```r
 mean3 <- mean(aggdata3$x)
@@ -257,6 +264,10 @@ library(gridExtra)
 ```
 
 ```
+## Warning: package 'gridExtra' was built under R version 3.1.2
+```
+
+```
 ## Loading required package: grid
 ```
 
@@ -264,8 +275,37 @@ library(gridExtra)
 grid.arrange(plot, plot3, ncol=2)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-2.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-10-2.png) 
 
 As you can see above, after filling NAs with the mean per interval, the mean and the median are the same in the new dataset without NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Using weekdays function, we put a label on each steps counting in order to see if the day is weekday or weekend day. Afterthat, we plot a timeseries comparing data over weekdays and weekend days. We use the data imputed before.
+
+For this purpose we use the variable date2 transformed before into POSIXlt (date format).
+
+
+```r
+activityWithoutNAs$weekdays <- (weekdays(activityWithoutNAs$date2, abbreviate = T))
+
+weekendsInd <- which(activityWithoutNAs[,"weekdays"] %in% c("sáb","dom"), arr.ind=TRUE)
+weekdaysInd <- which(!(activityWithoutNAs[,"weekdays"] %in% c("sáb","dom")), arr.ind=TRUE)
+activityWithoutNAs[weekendsInd, "weekdayType"] <- "weekend"
+activityWithoutNAs[weekdaysInd, "weekdayType"] <- "weekday"
+
+attach(activityWithoutNAs)
+aggdata4 <-aggregate(steps, by=list(interval,weekdayType), FUN=mean, na.rm=TRUE)
+detach(activityWithoutNAs)
+
+library(ggplot2)
+aggdata4$Avg_Steps <- aggdata4$x
+aggdata4$Interval <- aggdata4$Group.1
+aggdata4$WeekdayType <- aggdata4$Group.2
+plot4 <- ggplot(aggdata4, aes(Interval, Avg_Steps))
+plot4 <- plot4 +  geom_line() + ylab("Number of steps taken (daily average)")
+plot4 <- plot4 + facet_grid(WeekdayType~.)
+print(plot4)
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
