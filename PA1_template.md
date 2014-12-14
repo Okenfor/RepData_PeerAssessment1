@@ -15,7 +15,8 @@ activity$date2 <- strptime (activity$date, "%Y-%m-%d")
 
 ## What is mean total number of steps taken per day?
 
-An histogram of the total number of steps taken each day is created.
+An histogram of the total number of steps taken each day is created. Therefore, the data aggregated is shown below, besides de R code chunk. The first figure shown contains a density plot in which the total number of steps is represented.
+
 
 
 ```r
@@ -93,7 +94,8 @@ print(aggdata)
 detach(activity)
 
 library(ggplot2)
-plot <- ggplot(aggdata, aes(x=x))
+aggdata$Total_Steps <- aggdata$x
+plot <- ggplot(aggdata, aes(x=Total_Steps))
 plot <- plot +  geom_histogram(aes(y=..density..), binwidth = 500, colour="black", fill="white") +
     geom_density(alpha=.2, fill="#FF6666")  # Overlay with transparent density plot
 print(plot)
@@ -101,13 +103,30 @@ print(plot)
 
 ![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
 
-The mean and the median of the total number of steps are calculated. Then, mean (red line) and the median (blue line) are plotted in the histogram created abode.
+The mean and the median of the total number of steps are calculated. Then, mean (<span style="color:red">red line</span>) and the median (<span style="color:blue">blue line</span>) are plotted in the histogram created abode.
 
 
 ```r
 mean <- mean(aggdata$x)
 median <- median(aggdata$x)
-plot <- plot + geom_vline(aes(xintercept=mean), color="red", linetype="dashed", size=1) + geom_vline(aes(xintercept=median), color="blue", linetype="dashed", size=1)
+
+mean
+```
+
+```
+## [1] 9354.23
+```
+
+```r
+median
+```
+
+```
+## [1] 10395
+```
+
+```r
+plot <- plot + geom_vline(aes(xintercept=mean), color="red", linetype="dashed", size=1, labels = c("mean")) + geom_vline(aes(xintercept=median), color="blue", linetype="dashed", size=1, labels = c("median"))
 print(plot)
 ```
 
@@ -115,10 +134,138 @@ print(plot)
 
 ## What is the average daily activity pattern?
 
+In order to describe the average daily activity pattern, an average per interval is calculated, across all days. Further, a time series of the average calculated is plot.
 
+
+
+```r
+attach(activity)
+aggdata2 <-aggregate(steps, by=list(interval), FUN=mean, na.rm=TRUE)
+detach(activity)
+
+library(ggplot2)
+aggdata2$Avg_Steps <- aggdata2$x
+aggdata2$Interval <- aggdata2$Group.1
+plot2 <- ggplot(aggdata2, aes(Interval, Avg_Steps))
+plot2 <- plot2 +  geom_line() + ylab("Daily average")
+print(plot2)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+
+The maximum number of steps on average across all days is:
+
+
+```r
+maximum <- max(aggdata2$Avg_Steps)
+maximum
+```
+
+```
+## [1] 206.1698
+```
+
+The interval with the maximum number of steps on average calculated is:
+
+```r
+Interval_WithMax <- aggdata2[aggdata2$Avg_Steps == maximum, "Interval"]
+Interval_WithMax
+```
+
+```
+## [1] 835
+```
+
+The maximum interval is reported in the plot below.
+
+
+```r
+plot2 <- plot2 + geom_vline(aes(xintercept=Interval_WithMax), color="blue", linetype="dashed", size=1) + geom_hline(aes(yintercept=maximum), color="blue", linetype="dashed", size=1)
+print(plot2)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
 
 ## Imputing missing values
 
+In order to impute missing values, first the number of them are calculated. For that purpose, is.na function is used.
 
+
+```r
+sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
+```
+
+The strategy of imputing missing values is to use the mean as a value to replate to. Next, the meann per interval is reported and the missing values will be imputed.
+
+
+```r
+nas <- which(is.na(activity$steps), arr.ind=TRUE)
+
+activityWithoutNAs <- activity
+
+for (i in 1:length(nas) ) {
+activityWithoutNAs[nas[i],"steps"] <- aggdata2[activity[nas[i],"interval"] == aggdata2$Interval, "Avg_Steps"]
+}
+```
+
+Total number of steps is calculated again and then it is compared with the collection that has NAs. 
+
+
+
+```r
+attach(activityWithoutNAs)
+aggdata3 <-aggregate(activityWithoutNAs$steps, by=list(date), FUN=sum, na.rm=TRUE)
+detach(activityWithoutNAs)
+
+library(ggplot2)
+aggdata3$Total_Steps <- aggdata3$x
+plot3 <- ggplot(aggdata3, aes(x=Total_Steps))
+plot3 <- plot3 +  geom_histogram(aes(y=..density..), binwidth = 500, colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666")  # Overlay with transparent density plot
+print(plot3)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+
+```r
+mean3 <- mean(aggdata3$x)
+median3 <- median(aggdata3$x)
+
+mean3
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+median3
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+plot3 <- plot3 + geom_vline(aes(xintercept=mean3), color="red", linetype="dashed", size=1, labels = c("mean")) + geom_vline(aes(xintercept=median3), color="blue", linetype="dashed", size=1, labels = c("median"))
+
+library(gridExtra)
+```
+
+```
+## Loading required package: grid
+```
+
+```r
+grid.arrange(plot, plot3, ncol=2)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-2.png) 
+
+As you can see above, after filling NAs with the mean per interval, the mean and the median are the same in the new dataset without NAs.
 
 ## Are there differences in activity patterns between weekdays and weekends?
